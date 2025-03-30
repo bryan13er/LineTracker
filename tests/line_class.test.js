@@ -45,7 +45,7 @@ describe('Line class', () => {
     expect(bucket1Users.size).toBe(2);
   });
 
-  test('should make user1 the first in line and user10 the last in line'){
+  test('should make user1 the first in line and user10 the last in line', () => {
     const line = new Line();
 
     const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
@@ -70,18 +70,10 @@ describe('Line class', () => {
     line.insertUser(user9);  
     line.insertUser(user10); 
 
-    line.sortBucketBySubmitTime();
-
-
-    
+    // line.();
 
     
 
-
-
-
-
-
-  }
+  });
 
 });

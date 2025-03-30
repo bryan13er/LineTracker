@@ -1,5 +1,31 @@
 {
   "dependencies": {
-    "csv-parser": "^3.2.0"
+    "@prisma/client": "^6.5.0",
+    "csv-parser": "^3.2.0",
+    "express": "^4.21.2",
+    "mysql2": "^3.14.0",
+    "prisma": "^6.5.0"
+  },
+  "name": "ryan-project",
+  "version": "1.0.0",
+  "description": "Project to help track the line order of signups according to how many people they have referred break ties based on sign up date",
+  "main": "possible_functions.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bryan13er/LineTracker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/bryan13er/LineTracker/issues"
+  },
+  "homepage": "https://github.com/bryan13er/LineTracker#readme",
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
