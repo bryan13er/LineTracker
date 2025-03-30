@@ -8,6 +8,7 @@ class Line {
     this.zeroth_bucket_array_position_map = new Map();
 
     this.needsReSortBuckets = new Set();
+    this.max_referral = 0;
   } 
   
   // Mark a bucket as needing re-sort (for when users are added or referrals change)
@@ -18,13 +19,8 @@ class Line {
   getGlobalOffset(bucket_level){
     let global_offset = 0;
 
-    const sortedReferralCounts = Array.from(this.referral_buckets.keys()).sort((a, b) => b - a);
-    for (const referralCount of sortedReferralCounts) {
-      if(referralCount == bucket_level){
-        break;
-      }
-
-      global_offset += this.referral_buckets.get(referralCount).size
+    for (let refferal_count = this.max_referral; refferal_count > bucket_level; refferal_count--) {
+      global_offset += this.referral_buckets.get(refferal_count).size;  // Add the number of users in each bucket
     }
 
     return global_offset;
@@ -59,6 +55,11 @@ class Line {
     this.markBucketAsUnsorted(user.referrals);
 
     user.referrals += 1;
+
+    // Update max_referral if needed
+    if (user.referrals > this.max_referral) {
+      this.max_referral = user.referrals;
+    }
 
     if (!this.referral_buckets.has(user.referrals)) {
       this.referral_buckets.set(user.referrals, new Map());
