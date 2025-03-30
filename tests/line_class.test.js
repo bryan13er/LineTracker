@@ -10,7 +10,6 @@ describe('Line class', () => {
 
   // Test creating users and inserting into the system
   test('should create and insert users correctly', () => {
-    const line = new Line();
 
     // Create users
     const user1 = line.createUser('user1', null, '2025-03-28T12:00:00');
@@ -46,7 +45,6 @@ describe('Line class', () => {
   });
 
   test('should make user1 first in line, user2 second, and user10 last NO sortAllBuckets', () => {
-    const line = new Line();
 
     const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
     const user2  = line.createUser('user2', 'user1', '2025-03-28T12:05:00');  
@@ -76,7 +74,6 @@ describe('Line class', () => {
   });
 
   test('should make user1 first in line, user2 second, and user10 last YES sortAllBuckets', () => {
-    const line = new Line();
 
     const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
     const user2  = line.createUser('user2', 'user1', '2025-03-28T12:05:00');  
@@ -112,7 +109,6 @@ describe('Line class', () => {
   });
 
   test('expect null if user does not exist ', () => {
-    const line = new Line();
 
     const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
     const user2  = line.createUser('user2', 'user1', '2025-03-28T12:05:00');  
@@ -127,7 +123,6 @@ describe('Line class', () => {
   });
 
   test('should not have to sort all list when a user gets added later', () => {
-    const line = new Line();
 
     const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
     const user2  = line.createUser('user2', 'user1', '2025-03-28T12:05:00');  
@@ -171,7 +166,6 @@ describe('Line class', () => {
   
 
   test('is empty', () => {
-    const line = new Line();
     set = new Set();
     expect(line.isEmpty(set)).toBe(true);
   });

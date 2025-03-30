@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1743313776847" clover="3.2.0">
-  <project timestamp="1743313776847" name="All files">
+<coverage generated="1743313872215" clover="3.2.0">
+  <project timestamp="1743313872215" name="All files">
     <metrics statements="88" coveredstatements="88" conditionals="30" coveredconditionals="30" methods="15" coveredmethods="15" elements="133" coveredelements="133" complexity="0" loc="88" ncloc="88" packages="1" files="1" classes="1"/>
     <file name="line.js" path="/Users/bryan/Desktop/Ryan Project/line.js">
       <metrics statements="88" coveredstatements="88" conditionals="30" coveredconditionals="30" methods="15" coveredmethods="15"/>
-      <line num="3" count="13" type="stmt"/>
-      <line num="4" count="13" type="stmt"/>
-      <line num="6" count="13" type="stmt"/>
-      <line num="7" count="13" type="stmt"/>
-      <line num="8" count="13" type="stmt"/>
-      <line num="10" count="13" type="stmt"/>
-      <line num="11" count="13" type="stmt"/>
+      <line num="3" count="7" type="stmt"/>
+      <line num="4" count="7" type="stmt"/>
+      <line num="6" count="7" type="stmt"/>
+      <line num="7" count="7" type="stmt"/>
+      <line num="8" count="7" type="stmt"/>
+      <line num="10" count="7" type="stmt"/>
+      <line num="11" count="7" type="stmt"/>
       <line num="16" count="85" type="stmt"/>
       <line num="20" count="13" type="stmt"/>
       <line num="22" count="13" type="stmt"/>
