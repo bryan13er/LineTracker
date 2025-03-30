@@ -45,7 +45,7 @@ describe('Line class', () => {
     expect(bucket1Users.size).toBe(2);
   });
 
-  test('should make user1 the first in line and user10 the last in line', () => {
+  test('should make user1 first in line, user2 second, and user10 last NO sortAllBuckets', () => {
     const line = new Line();
 
     const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
@@ -70,14 +70,113 @@ describe('Line class', () => {
     line.insertUser(user9);  
     line.insertUser(user10); 
 
-    // console.log(line.referral_buckets);
-    // line.getGlobalPosition(user1.user_id);
-    // console.log(line.referral_buckets);
+    expect(line.getGlobalPosition(user1.user_id)).toBe(0);
+    expect(line.getGlobalPosition(user2.user_id)).toBe(1);
+    expect(line.getGlobalPosition(user10.user_id)).toBe(9);
+  });
+
+  test('should make user1 first in line, user2 second, and user10 last YES sortAllBuckets', () => {
+    const line = new Line();
+
+    const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
+    const user2  = line.createUser('user2', 'user1', '2025-03-28T12:05:00');  
+    const user3  = line.createUser('user3', 'user1', '2025-03-28T12:10:00');  
+    const user4  = line.createUser('user4', 'user1', '2025-03-28T12:15:00');  
+    const user5  = line.createUser('user5', 'user2', '2025-03-28T12:20:00');  
+    const user6  = line.createUser('user6', 'user2', '2025-03-28T12:25:00');  
+    const user7  = line.createUser('user7', 'user2', '2025-03-28T12:30:00');  
+    const user8  = line.createUser('user8', null, '2025-03-28T12:35:00');  
+    const user9  = line.createUser('user9', null, '2025-03-28T12:40:00');  
+    const user10 = line.createUser('user10', null, '2025-03-28T12:45:00');  
+
+    line.insertUser(user1); 
+    line.insertUser(user2);  
+    line.insertUser(user3);  
+    line.insertUser(user4);  
+    line.insertUser(user5);  
+    line.insertUser(user6);  
+    line.insertUser(user7); 
+    line.insertUser(user8);  
+    line.insertUser(user9);  
+    line.insertUser(user10); 
+
+    line.sortAllBuckets();
+
+    // should exit early because nothing to sort
+    line.sortAllBuckets();
 
 
     expect(line.getGlobalPosition(user1.user_id)).toBe(0);
     expect(line.getGlobalPosition(user2.user_id)).toBe(1);
     expect(line.getGlobalPosition(user10.user_id)).toBe(9);
   });
+
+  test('expect null if user does not exist ', () => {
+    const line = new Line();
+
+    const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
+    const user2  = line.createUser('user2', 'user1', '2025-03-28T12:05:00');  
+    const user3  = line.createUser('user3', 'user1', '2025-03-28T12:10:00'); 
+
+    line.insertUser(user1); 
+    line.insertUser(user2);  
+    line.insertUser(user3); 
+
+    expect(line.findUser('user4')).toBe(null);
+    expect(line.getGlobalPosition('user4')).toBe(null);
+  });
+
+  test('should not have to sort all list when a user gets added later', () => {
+    const line = new Line();
+
+    const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
+    const user2  = line.createUser('user2', 'user1', '2025-03-28T12:05:00');  
+    const user3  = line.createUser('user3', 'user1', '2025-03-28T12:10:00');  
+    const user4  = line.createUser('user4', 'user1', '2025-03-28T12:15:00');  
+    const user5  = line.createUser('user5', 'user2', '2025-03-28T12:20:00');  
+    const user6  = line.createUser('user6', 'user2', '2025-03-28T12:25:00');  
+    const user7  = line.createUser('user7', 'user2', '2025-03-28T12:30:00');  
+    const user8  = line.createUser('user8', null, '2025-03-28T12:35:00');  
+    const user9  = line.createUser('user9', null, '2025-03-28T12:40:00');  
+    const user10 = line.createUser('user10', null, '2025-03-28T12:45:00'); 
+    const user11 = line.createUser('user11', 'user10', '2025-03-28T12:45:00');
+
+    line.insertUser(user1); 
+    line.insertUser(user2);  
+    line.insertUser(user3);  
+    line.insertUser(user4);  
+    line.insertUser(user5);  
+    line.insertUser(user6);  
+    line.insertUser(user7); 
+    line.insertUser(user8);  
+    line.insertUser(user9);  
+    line.insertUser(user10); 
+
+    line.sortAllBuckets();
+    line.insertUser(user11);
+    line.sortAllBuckets();
+
+    expect(line.getGlobalPosition('user10')).toBe(2);
+  });
+
+  test('referer does not exist', () => {
+    const user1  = line.createUser('user1', null, '2025-03-28T12:00:00');
+    const user2  = line.createUser('user2', 'user0', '2025-03-28T12:05:00'); 
+
+    line.insertUser(user1); 
+    line.insertUser(user2); 
+
+    expect(line.getGlobalPosition('user1')).toBe(0);
+  });
+  
+
+  test('is empty', () => {
+    const line = new Line();
+    set = new Set();
+    expect(line.isEmpty(set)).toBe(true);
+  });
+
+
+
 
 });

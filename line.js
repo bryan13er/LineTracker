@@ -25,6 +25,11 @@ class Line {
 
     return global_offset;
   }
+
+  // Helper method to check if a set is empty
+  isEmpty(set) {
+    return set.size === 0;
+  }
   
   // Constructor to create a user object
   createUser(user_id, ref_id, submit_time) {
@@ -128,8 +133,6 @@ class Line {
         this.zeroth_bucket_array_position_map = new_position_map;
     } else {
         const users_container = this.referral_buckets.get(referralCount);
-        if (!users_container) return; // Safety check
-
         const sortedUsers = Array.from(users_container.values()).sort((a, b) => a.submit_time - b.submit_time);
 
         for (const user of sortedUsers) {
@@ -142,7 +145,7 @@ class Line {
 
   // Sort each bucket by submit_time and assign global positions
   sortAllBuckets() {
-    if(this.needsReSortBuckets.size === 0){
+    if(this.isEmpty(this.needsReSortBuckets)){
       return;
     }
 
