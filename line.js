@@ -16,7 +16,7 @@ class Line {
   }
 
   getGlobalOffset(bucket_level){
-    global_offset = 0;
+    let global_offset = 0;
 
     const sortedReferralCounts = Array.from(this.referral_buckets.keys()).sort((a, b) => b - a);
     for (const referralCount of sortedReferralCounts) {
@@ -87,47 +87,55 @@ class Line {
 
   // find the user based on user_id
   // returns a user object
-  findUser(user_id){
+  findUser(user_id) {
+    // Check in the zeroth bucket
+    if (this.zeroth_bucket_array_position_map.has(user_id)) {
+      return this.zeroth_bucket_array[this.zeroth_bucket_array_position_map.get(user_id)];
+    }
+  
+    // Iterate through other referral buckets, skipping the zeroth bucket
     for (const [referrals, bucket] of this.referral_buckets) {
-      if(referrals === 0){
-        if (this.zeroth_bucket_array_position_map.has(user_id)){
-          return this.zeroth_bucket_array[this.zeroth_bucket_array_position_map.get(user_id)];
-        }
-      }else{
-        if (bucket.has(user_id)){
-          return bucket.get(user_id);
-        }
+      if (referrals === 0) {
+        continue;  // Skip the zeroth bucket
+      }
+      if (bucket.has(user_id)) {
+        return bucket.get(user_id);
       }
     }
     return null;
   }
 
-  sortBucket(referralCount){
+  sortBucket(referralCount) {
+    const global_offset = this.getGlobalOffset(referralCount);
+    let local_position = 0;
+
     if (referralCount === 0) {
-      // Zeroth bucket is already sorted due to submission order
-      const global_offset = this.getGlobalOffset(referralCount);
-      let local_position = 0;
-      
-      for (const user of this.zeroth_bucket_array) {
-        if (user !== null) {  // Skip removed users (null entries)
-          user.local_position  = local_position++;
-          user.global_position = local_position + global_offset;
+        let new_zeroth_bucket = [];
+        let new_position_map = new Map();
+
+        for (const user of this.zeroth_bucket_array) {
+            if (user !== null) {
+                user.local_position = local_position;
+                user.global_position = local_position + global_offset;
+                new_zeroth_bucket.push(user);
+                new_position_map.set(user.user_id, local_position);
+                local_position += 1;
+            }
         }
-      }
 
-    }else{
-      const global_offset = this.getGlobalOffset(referralCount);
-      const users_container = this.referral_buckets.get(referralCount);
+        this.zeroth_bucket_array = new_zeroth_bucket;
+        this.zeroth_bucket_array_position_map = new_position_map;
+    } else {
+        const users_container = this.referral_buckets.get(referralCount);
+        if (!users_container) return; // Safety check
 
-      // Sort users within the bucket by submit_time (ascending)
-      const sortedUsers = Array.from(users_container.values()).sort((a, b) => a.submit_time - b.submit_time);
+        const sortedUsers = Array.from(users_container.values()).sort((a, b) => a.submit_time - b.submit_time);
 
-      // Assign global positions
-      let local_position = 0;
-      for (const user of sortedUsers) {
-        user.local_position  = local_position++;
-        user.global_position = local_position + global_offset;
-      }
+        for (const user of sortedUsers) {
+            user.local_position = local_position;
+            user.global_position = local_position + global_offset;
+            local_position += 1;
+        }
     }
   }
 

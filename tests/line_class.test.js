@@ -70,10 +70,14 @@ describe('Line class', () => {
     line.insertUser(user9);  
     line.insertUser(user10); 
 
-    // line.();
+    // console.log(line.referral_buckets);
+    // line.getGlobalPosition(user1.user_id);
+    // console.log(line.referral_buckets);
 
-    
 
+    expect(line.getGlobalPosition(user1.user_id)).toBe(0);
+    expect(line.getGlobalPosition(user2.user_id)).toBe(1);
+    expect(line.getGlobalPosition(user10.user_id)).toBe(9);
   });
 
 });
