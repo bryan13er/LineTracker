@@ -161,7 +161,6 @@ class Line {
     }
   }
 
-  // TODO only sort user bucket
   sortUserBucket(user){
     const referralCount = user.referrals
 
@@ -200,7 +199,5 @@ class Line {
   }
 
 }
-
-
 
 module.exports = Line;

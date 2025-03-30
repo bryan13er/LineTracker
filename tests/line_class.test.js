@@ -24,8 +24,6 @@ describe('Line class', () => {
     // Get a copy of the users
     const copiedBuckets = line.getUsers();
 
-    console.log(copiedBuckets)
-
     // Check the referral count buckets and assert that users are placed correctly
     const bucket0Users = copiedBuckets.get(0);  // Zeroth bucket ( 2 referral)
     const bucket1Users = copiedBuckets.get(1);  // First bucket (1 referral)

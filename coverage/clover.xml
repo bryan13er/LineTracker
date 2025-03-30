@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1743313872215" clover="3.2.0">
-  <project timestamp="1743313872215" name="All files">
+<coverage generated="1743314046929" clover="3.2.0">
+  <project timestamp="1743314046929" name="All files">
     <metrics statements="88" coveredstatements="88" conditionals="30" coveredconditionals="30" methods="15" coveredmethods="15" elements="133" coveredelements="133" complexity="0" loc="88" ncloc="88" packages="1" files="1" classes="1"/>
     <file name="line.js" path="/Users/bryan/Desktop/Ryan Project/line.js">
       <metrics statements="88" coveredstatements="88" conditionals="30" coveredconditionals="30" methods="15" coveredmethods="15"/>
@@ -75,23 +75,23 @@
       <line num="157" count="2" type="stmt"/>
       <line num="159" count="10" type="stmt"/>
       <line num="160" count="10" type="stmt"/>
-      <line num="166" count="8" type="stmt"/>
-      <line num="168" count="8" type="cond" truecount="2" falsecount="0"/>
-      <line num="169" count="5" type="stmt"/>
+      <line num="165" count="8" type="stmt"/>
+      <line num="167" count="8" type="cond" truecount="2" falsecount="0"/>
+      <line num="168" count="5" type="stmt"/>
+      <line num="171" count="3" type="stmt"/>
       <line num="172" count="3" type="stmt"/>
-      <line num="173" count="3" type="stmt"/>
-      <line num="178" count="1" type="stmt"/>
-      <line num="180" count="1" type="stmt"/>
-      <line num="181" count="2" type="cond" truecount="2" falsecount="0"/>
-      <line num="182" count="1" type="stmt"/>
-      <line num="184" count="1" type="stmt"/>
-      <line num="188" count="1" type="stmt"/>
-      <line num="193" count="9" type="stmt"/>
-      <line num="194" count="9" type="cond" truecount="2" falsecount="0"/>
+      <line num="177" count="1" type="stmt"/>
+      <line num="179" count="1" type="stmt"/>
+      <line num="180" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="181" count="1" type="stmt"/>
+      <line num="183" count="1" type="stmt"/>
+      <line num="187" count="1" type="stmt"/>
+      <line num="192" count="9" type="stmt"/>
+      <line num="193" count="9" type="cond" truecount="2" falsecount="0"/>
+      <line num="194" count="8" type="stmt"/>
       <line num="195" count="8" type="stmt"/>
-      <line num="196" count="8" type="stmt"/>
-      <line num="199" count="1" type="stmt"/>
-      <line num="206" count="1" type="stmt"/>
+      <line num="198" count="1" type="stmt"/>
+      <line num="203" count="1" type="stmt"/>
     </file>
   </project>
 </coverage>
