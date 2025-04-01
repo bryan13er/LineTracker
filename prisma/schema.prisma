@@ -13,12 +13,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  user_id         String  @id @default(uuid()) // Primary key
-  email           String? @unique             // Must be unique if provided
-  telegram_handle String? @unique             // Must be unique if provided
-  ref_id          String?
-  submit_time     DateTime
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+model Users {
+  user_id          String   @id
+  ref_id           String?
+  submit_time      DateTime
+  telegram_handle  String?
+  email            String?
+  trading_style    String?    // Single-value, stored as TEXT
+  ideal_setup      String?    // Single-value, stored as TEXT
+  current_trading_platforms  Json? // Multi-choice, stored as JSON
+  trading_methods  Json? // Multi-choice, stored as JSON
+  favorite_feature Json? // Stores up to 2 favorite features
+  wishlist_feature Json? // Stores up to 2 wishlist features
+  ref_count        Int      @default(0)
+  local_position   Int?
+  global_position  Int?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 }
