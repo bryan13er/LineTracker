@@ -3,12 +3,12 @@ const csv = require("csv-parser");
 const { PrismaClient } = require("@prisma/client");
 const Line = require("./line");
 
-const prisma = new PrismaClient();
 const BATCH_SIZE = 1000; // Process and update every 1000 users
 
 class CSVProcessor {
-  constructor(filePath) {
+  constructor(filePath, prismaInstance = new PrismaClient()) {
     this.filePath = filePath;
+    this.prisma = prismaInstance;
     this.line = new Line();
     this.userCount = 0;
   }
@@ -18,26 +18,36 @@ class CSVProcessor {
 
     for await (const row of stream) {
       const dbUser = this.createDBUser(row);
+      // console.log(dbUser);
 
       try {
+        // Check if the user already exists in the database
+        const existingUser = await this.prisma.users.findUnique({
+          where: { user_id: dbUser.user_id }, // Match on the primary key
+        });
+      
+        if (existingUser) {
+          // console.log(`User ${dbUser.user_id} already exists. Skipping.`);
+          continue;
+        }
+      
         // Insert user into the database
-        await prisma.user.create({ data: dbUser });
-        // Insert user into the line object
+        await this.prisma.users.create({ data: dbUser });
         this.addToLine(dbUser);
         this.userCount++;
-
-        // Batch processing
-        if (this.userCount % BATCH_SIZE === 0) {
-          await this.sortAndUpdate();
-        }
       } catch (error) {
-        console.error("Error processing user:", dbUser.user_id, error);
+        console.error("Error processing user:", dbUser.user_id);
+        console.error("Prisma Error:", error);
       }
+
+      // console.log(this.line.referral_buckets);
     }
 
     // Final update for remaining users
-    if (this.line.markBucketAsUnsorted.size > 0) {
+    if (this.line.needsReSortBuckets.size > 0) {
+      console.log("happens");
       await this.sortAndUpdate();
+      // console.log(this.line.referral_buckets);
     }
 
     console.log("CSV Processing Complete");
@@ -77,11 +87,13 @@ class CSVProcessor {
       ref_count: 0,
       local_position: null,
       global_position: null,
+      created_at: new Date(),
+      updated_at: new Date(),
     };
   }
 
   addToLine(dbUser) {
-    lineUser = this.line.createUser(
+    const lineUser = this.line.createUser(
       dbUser.user_id,
       dbUser.ref_id,
       dbUser.submit_time,
@@ -95,39 +107,62 @@ class CSVProcessor {
     // update users per affected group
     for (const group of groupsToUpdate) {
       // users is an array
+      // the users in here are a modified users object
       const users = this.line.getGroup(group);
       if (users.length > 0) {
-        this.updateDatabaseBatchUsersPosition(users)
+        await this.updateDatabaseBatchUsersPosition(users)
       }
     }
   }
 
-  async updateDatabaseBatchUsersPosition(users){
+  async updateDatabaseBatchUsersPosition(users) {
     if (users.length === 0) return;
-    
-    await prisma.$transaction(
-      users.map(user => prisma.user.update({
+  
+    const updates = users.map((user) =>
+      this.prisma.users.update({
         where: { user_id: user.user_id },
         data: {
+          ref_count: user.referrals,
           local_position: user.local_position,
           global_position: user.global_position,
           updated_at: new Date(),
         },
-      }))
+      })
     );
+  
+    // console.log("Updates to be applied:", updates); // Log before applying updates
+    await this.prisma.$transaction(updates);
+    // console.log("Updates successfully applied:", updates); // Log after applying updates
   }
 
   async updateDatabaseUserPosition(user) {
-    await prisma.user.update({
+    await this.prisma.users.update({
       where: {
         user_id: user.user_id,
       },
       data: {
+        ref_count: user.referrals,
         local_position: user.local_position,
         global_position: user.global_position,
         updated_at: new Date(),
       },
     });
+  }
+
+  async getTopTenUsers() {
+    try {
+      const topUsers = await this.prisma.users.findMany({
+        orderBy: {
+          global_position: 'asc', // Sort by global_position in descending order
+        },
+        take: 10, // Limit to top 10 users
+      });
+
+      return topUsers;
+    } catch (error) {
+      console.error('Error fetching top ten users:', error);
+      throw error;
+    }
   }
 
   parsePlatforms(row) {

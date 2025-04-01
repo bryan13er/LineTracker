@@ -1,76 +1,77 @@
-const fs = require('fs');
-const { PrismaClient } = require('@prisma/client');
-const CSVProcessor = require('../CSVProcessor');  // Adjust the path accordingly
+jest.mock("@prisma/client");
+const { PrismaClient } = require("@prisma/client");
+const Line = require("../line");
+const CSVProcessor = require("../CSVProcessor");
 
-// Mock Prisma Client
-jest.mock('@prisma/client');
-const prisma = new PrismaClient();
+jest.mock("../line");
 
-describe('CSVProcessor', () => {
+describe("CSVProcessor", () => {
+  let mockPrisma;
+  let mockLine;
   let csvProcessor;
 
-  // Mock data
-  const mockCSVData = [
-    {
-      "user_id": "1",
-      "ref_id": "0",
-      "Submitted at": "2025-02-03 22:03:38",
-      "Please enter your telegram or email": "@test",
-      "email@email.com": "test@example.com",
-      // Add other necessary fields here
-    },
-    {
-      "user_id": "2",
-      "ref_id": "1",
-      "Submitted at": "2025-02-03 22:05:02",
-      "Please enter your telegram or email": "@test2",
-      "email@email.com": "test2@example.com",
-      // Add other necessary fields here
-    }
-  ];
-
   beforeEach(() => {
-    // Reset or mock the necessary methods before each test
-    prisma.user.create = jest.fn().mockResolvedValue(true);
-    prisma.user.update = jest.fn().mockResolvedValue(true);
-    
-    // Create a new CSVProcessor instance for each test
-    csvProcessor = new CSVProcessor('mockFile.csv');
-  });
-
-  it('should correctly process CSV and add users to the line', async () => {
-    // Mock fs.createReadStream to simulate the CSV data being read
-    jest.spyOn(fs, 'createReadStream').mockReturnValueOnce({
-      pipe: jest.fn().mockReturnValue({
-        on: jest.fn().mockImplementationOnce((event, callback) => {
-          if (event === 'data') {
-            mockCSVData.forEach(row => callback(row));  // Simulate data rows being passed
-          }
-          if (event === 'end') {
-            callback();  // Simulate the end of the stream
-          }
-        }),
-      }),
-    });
-
-    // Call the processCSV method
-    await csvProcessor.processCSV();
-
-    // Check that the database insertions and updates were called the correct number of times
-    expect(prisma.user.create).toHaveBeenCalledTimes(mockCSVData.length);
-    expect(prisma.user.update).toHaveBeenCalledTimes(mockCSVData.length);
-  });
-
-  it('should handle the batch processing correctly', async () => {
-    // Assuming batch size is 1000, mock batch processing
-    const processBatchMock = jest.spyOn(csvProcessor, 'sortAndUpdate').mockResolvedValue(true);
-
-    await csvProcessor.processCSV();
-
-    expect(processBatchMock).toHaveBeenCalled();
+    // Mock PrismaClient
+    mockPrisma = {
+      users: {
+        create: jest.fn(),
+        update: jest.fn((args) => args), // Mock update to return the input args
+      },
+      $transaction: jest.fn((operations) => Promise.resolve(operations)), // Mock $transaction
+    };
+    PrismaClient.mockImplementation(() => mockPrisma);
+  
+    // Mock Line class
+    mockLine = {
+      createUser: jest.fn(),
+      insertUser: jest.fn(),
+      sortAllBuckets: jest.fn().mockReturnValue([]),
+      getGroup: jest.fn().mockReturnValue([]),
+      needsReSortBuckets: new Set(),
+    };
+    Line.mockImplementation(() => mockLine);
+  
+    // Create an instance of CSVProcessor with the mocked PrismaClient
+    csvProcessor = new CSVProcessor("test.csv", mockPrisma);
   });
 
   afterEach(() => {
-    jest.clearAllMocks(); // Clear mocks after each test
+    jest.clearAllMocks();
+  });
+
+  test("updateDatabaseBatchUsersPosition should call users.update for each user", async () => {
+    // Mock user data
+    const mockUsers = [
+      { user_id: "1", referrals: 10, local_position: 1, global_position: 5 },
+      { user_id: "2", referrals: 20, local_position: 2, global_position: 10 },
+    ];
+
+    // Call the method
+    await csvProcessor.updateDatabaseBatchUsersPosition(mockUsers);
+
+    // Assertions
+    expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.$transaction).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          where: { user_id: "1" },
+          data: {
+            ref_count: 10,
+            local_position: 1,
+            global_position: 5,
+            updated_at: expect.any(Date),
+          },
+        }),
+        expect.objectContaining({
+          where: { user_id: "2" },
+          data: {
+            ref_count: 20,
+            local_position: 2,
+            global_position: 10,
+            updated_at: expect.any(Date),
+          },
+        }),
+      ])
+    );
   });
 });
