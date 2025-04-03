@@ -3,14 +3,19 @@ const csv = require("csv-parser");
 const { PrismaClient } = require("@prisma/client");
 const Line = require("./line");
 
-const BATCH_SIZE = 1000; // Process and update every 1000 users
+// TODO: was 1000
+const BATCH_SIZE = 1; // Process and update every 1000 users
 
 class CSVProcessor {
   constructor(filePath, prismaInstance = new PrismaClient()) {
     this.filePath = filePath;
     this.prisma = prismaInstance;
-    this.line = new Line();
+    this.line = new Line(this.prisma);
     this.userCount = 0;
+  }
+
+  async clearLineObject(){
+    this.line.clear();
   }
 
   async processCSV() {
@@ -18,8 +23,6 @@ class CSVProcessor {
 
     for await (const row of stream) {
       const dbUser = this.createDBUser(row);
-      // console.log(dbUser);
-
       try {
         // Check if the user already exists in the database
         const existingUser = await this.prisma.users.findUnique({
@@ -27,28 +30,31 @@ class CSVProcessor {
         });
       
         if (existingUser) {
-          // console.log(`User ${dbUser.user_id} already exists. Skipping.`);
           continue;
         }
       
         // Insert user into the database
         await this.prisma.users.create({ data: dbUser });
-        this.addToLine(dbUser);
+        await this.addToLine(dbUser);
         this.userCount++;
+
+        // Batch processing
+        if (this.userCount % BATCH_SIZE === 0) {
+          await this.sortAndUpdate();
+          this.line.clear();
+        }
+
       } catch (error) {
         console.error("Error processing user:", dbUser.user_id);
         console.error("Prisma Error:", error);
       }
-
-      // console.log(this.line.referral_buckets);
     }
 
-    // Final update for remaining users
-    if (this.line.needsReSortBuckets.size > 0) {
-      console.log("happens");
-      await this.sortAndUpdate();
-      // console.log(this.line.referral_buckets);
-    }
+    // // Final update for remaining users
+    // if (this.line.needsReSortBuckets.size > 0) {
+    //   console.log("happens");
+    //   await this.sortAndUpdate();
+    // }
 
     console.log("CSV Processing Complete");
   }
@@ -84,7 +90,7 @@ class CSVProcessor {
           ],
         ].filter(Boolean),
       ),
-      ref_count: 0,
+      ref_count: -1,
       local_position: null,
       global_position: null,
       created_at: new Date(),
@@ -92,17 +98,17 @@ class CSVProcessor {
     };
   }
 
-  addToLine(dbUser) {
+  async addToLine(dbUser) {
     const lineUser = this.line.createUser(
       dbUser.user_id,
       dbUser.ref_id,
       dbUser.submit_time,
     );
-    this.line.insertUser(lineUser);
+    await this.line.insertUser(lineUser);
   }
 
   async sortAndUpdate() {
-    const groupsToUpdate = this.line.sortAllBuckets();
+    const groupsToUpdate = await this.line.sortAllBuckets();
 
     // update users per affected group
     for (const group of groupsToUpdate) {
