@@ -17,7 +17,6 @@ class Line {
     this.zeroth_bucket_array_length = 0;
     this.zeroth_bucket_array_position_map.clear();
     this.needsReSortBuckets.clear();
-    this.max_referral = 0;
   }
 
   // Mark a bucket as needing re-sort (for when users are added or referrals change)
@@ -28,7 +27,6 @@ class Line {
   async getDatabaseBucketCount(bucket){
     const userCount = await this.prisma.users.count();
     if (userCount === 0) {
-      console.log("Database is empty.");
       return 0; // Return 0 if the database is empty
     }
 
@@ -41,17 +39,28 @@ class Line {
     return groupCount; 
   }
 
+  // TODO: global is off by 1 for 0th row wonder why??? 4/3 last thing i did
+
   async getGlobalOffset(bucket_level) {
     let global_offset = 0;
 
+    //TODO: be careful b/c this is entirely dependent on the value of max_referral
+    // maybe get max in memory and max in db and compare to make sure its correct
     for (
       let refferal_count = this.max_referral;
       refferal_count > bucket_level;
       refferal_count--
     ) {
       const database_count = await this.getDatabaseBucketCount(refferal_count);
-      // Add the number of users in each bucket
-      global_offset += this.referral_buckets.get(refferal_count).size + database_count; 
+      // TODO: this only works because we sort in descending order test this througly
+      const bucketSize = this.referral_buckets.get(refferal_count)?.size ?? 0;
+      if (this.referral_buckets.has(refferal_count)) {
+        global_offset += this.needsReSortBuckets.has(refferal_count)
+          ? bucketSize + database_count
+          : bucketSize;
+      } else {
+        global_offset += database_count;
+      }
     }
 
     return global_offset;
@@ -63,12 +72,12 @@ class Line {
   }
 
   // Constructor to create a user object
-  createUser(user_id, ref_id, submit_time) {
+  createUser(user_id, ref_id, submit_time, referrals=0) {
     return {
       user_id: user_id,
       ref_id: ref_id,
       submit_time: new Date(submit_time), // Convert to Date object
-      referrals: 0,
+      referrals: referrals,
       local_position: null, // Position will be calculated after sorting
       global_position: null, // Global rank will be calculated after sorting
     };
@@ -107,6 +116,8 @@ class Line {
       this.referral_buckets.set(user.referrals, new Map());
     }
 
+    //TODO: need to be carful that the new user always goes up a group and does not try
+    // to set the 0th group i.e. the array group 
     this.referral_buckets.get(user.referrals).set(user.user_id, user);
     this.markBucketAsUnsorted(user.referrals);
   }
@@ -130,6 +141,10 @@ class Line {
       this.zeroth_bucket_array_length,
     );
     this.zeroth_bucket_array_length += 1;
+
+    if(user.user_id === '3'){
+      console.log("user 3 refers user 2");
+    }
   
     // Check if the referrer exists in memory
     if (user.ref_id) {
@@ -147,13 +162,15 @@ class Line {
             dbReferrer.user_id,
             dbReferrer.ref_id,
             dbReferrer.submit_time,
+            dbReferrer.ref_count
           );
 
           // set to negative 1 to not mess up groups until properly udpated
           // TODO: this update needs to be written to the database
+          this.updateUser(referral_user);
           await this.resetDbUser(referral_user);
           // Add the referrer to the line
-          this.updateUser(referral_user);
+          
         }
       // If the referrer exists (either in memory or loaded from the database), update them
       } else if (referral_user) {
@@ -162,8 +179,6 @@ class Line {
     }
     // Mark the zeroth bucket as unsorted
     this.markBucketAsUnsorted(0);
-    console.log('WHYYYY');
-    console.log(this.needsReSortBuckets);
   }
 
   // find the user based on user_id
@@ -225,8 +240,6 @@ class Line {
   }
 
   async updateZerothBucketPositions(sortedUsers){
-    console.log(sortedUsers);
-
     let new_zeroth_bucket = [];
     let new_position_map = new Map();
     let local_position = 0;
@@ -255,6 +268,14 @@ class Line {
       user.global_position = local_position + global_offset;
       local_position += 1;
     }
+
+    //TODO: need to update in memory bucket to reflect updated users
+    this.referral_buckets.get(referralCount)?.clear();
+    
+    this.referral_buckets.set(
+      referralCount,
+      new Map(sortedUsers.map(user => [user.user_id, user]))
+    );
   }
 
   async getDBUsersForBucket(referralCount) {
@@ -264,52 +285,53 @@ class Line {
     });
   }
 
-  async getDbUsersArray(referralCount){
+  async getDbUsersArray(referralCount) {
     const dbUsers = await this.getDBUsersForBucket(referralCount);
-
-    if(dbUsers.length === 0){
+  
+    if (dbUsers.length === 0) {
       return [];
     }
-
+  
     // Convert database users into memory-compatible user objects
-    const dbUsersInMemory = dbUsers.map((dbUser) => {
+    const dbUsersInMemory = [];
+    for (const dbUser of dbUsers) {
+      if (this.findUser(dbUser.user_id)) {
+        // Skip users already in memory
+        continue;
+      }
+  
       const user = this.createUser(
         dbUser.user_id,
         dbUser.ref_id,
         dbUser.submit_time,
+        dbUser.ref_count
       );
       user.referrals = dbUser.ref_count;
       user.local_position = dbUser.local_position;
       user.global_position = dbUser.global_position;
-      return user;
-    })
-
+  
+      dbUsersInMemory.push(user);
+    }
+  
     return dbUsersInMemory;
   }
 
   async sortBucket(referralCount) {
     const dbUsers = await this.getDbUsersArray(referralCount);
 
-    if (dbUsers.length > 0){
-      console.log('in database');
-    }
-
     if (referralCount === 0) {
-
-      console.log("IN HERE TWICE");
-      console.log("in memory:")
-      console.log(this.zeroth_bucket_array);
-      console.log("in database");
-      console.log(dbUsers);
-      console.log("DONE HERE");
-
       const sortedUsers = this.mergeSortedUsers(this.zeroth_bucket_array, dbUsers);
       await this.updateZerothBucketPositions(sortedUsers);
     } else {
-      const users_container = this.referral_buckets.get(referralCount);
-      const sortedMemoryUsers = Array.from(users_container.values()).sort(
-        (a, b) => a.submit_time - b.submit_time,
-      );
+      let sortedMemoryUsers = [];
+
+      if(this.referral_buckets.has(referralCount)){
+        const users_container = this.referral_buckets.get(referralCount);
+        sortedMemoryUsers = Array.from(users_container.values()).sort(
+          (a, b) => a.submit_time - b.submit_time,
+        );
+      }
+      
       const sortedUsers = this.mergeSortedUsers(sortedMemoryUsers, dbUsers);
       await this.updateNthBucketPositions(sortedUsers, referralCount)
     }
@@ -318,12 +340,9 @@ class Line {
 
   // Sort each bucket by submit_time and assign global positions
   async sortAllBuckets() {
-    console.log("NOW");
-    console.log(this.needsReSortBuckets);
 
     // TODO: need to pass an empty array instead causes bug if group is undefiend
     if (this.isEmpty(this.needsReSortBuckets)) {
-      console.log("HERE");
       return null;
     }
 
@@ -333,8 +352,6 @@ class Line {
     );
     
     const updatedBuckets = new Set(sortedReferralCounts);
-
-    console.log("TEST",updatedBuckets);
 
     for (const referralCount of sortedReferralCounts) {
       await this.sortBucket(referralCount);

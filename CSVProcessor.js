@@ -14,7 +14,7 @@ class CSVProcessor {
     this.userCount = 0;
   }
 
-  async clearLineObject(){
+  clearLineObject(){
     this.line.clear();
   }
 
@@ -41,7 +41,7 @@ class CSVProcessor {
         // Batch processing
         if (this.userCount % BATCH_SIZE === 0) {
           await this.sortAndUpdate();
-          this.line.clear();
+          this.clearLineObject();
         }
 
       } catch (error) {
@@ -50,11 +50,11 @@ class CSVProcessor {
       }
     }
 
-    // // Final update for remaining users
-    // if (this.line.needsReSortBuckets.size > 0) {
-    //   console.log("happens");
-    //   await this.sortAndUpdate();
-    // }
+    // Final update for remaining users
+    if (this.line.needsReSortBuckets.size > 0) {
+      console.log("happens");
+      await this.sortAndUpdate();
+    }
 
     console.log("CSV Processing Complete");
   }
