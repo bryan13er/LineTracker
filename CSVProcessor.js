@@ -3,7 +3,7 @@ const csv = require("csv-parser");
 const { PrismaClient } = require("@prisma/client");
 const Line = require("./line");
 
-// TODO: was 1000
+// TODO: was 1
 const BATCH_SIZE = 1; // Process and update every 1000 users
 
 class CSVProcessor {
@@ -22,6 +22,11 @@ class CSVProcessor {
     const stream = fs.createReadStream(this.filePath).pipe(csv());
 
     for await (const row of stream) {
+      // skip empty row
+      if (Object.values(row).every((value) => value === '' || value === null || value === undefined)) {
+        continue;
+      }
+
       const dbUser = this.createDBUser(row);
       try {
         // Check if the user already exists in the database
@@ -40,8 +45,10 @@ class CSVProcessor {
 
         // Batch processing
         if (this.userCount % BATCH_SIZE === 0) {
+          console.log("gets to the sort");
           await this.sortAndUpdate();
           this.clearLineObject();
+          // break;
         }
 
       } catch (error) {
@@ -50,9 +57,11 @@ class CSVProcessor {
       }
     }
 
+    console.log("Done reading");
+
     // Final update for remaining users
     if (this.line.needsReSortBuckets.size > 0) {
-      console.log("happens");
+      console.log("sorts left over users");
       await this.sortAndUpdate();
     }
 
@@ -136,9 +145,7 @@ class CSVProcessor {
       })
     );
   
-    // console.log("Updates to be applied:", updates); // Log before applying updates
     await this.prisma.$transaction(updates);
-    // console.log("Updates successfully applied:", updates); // Log after applying updates
   }
 
   async updateDatabaseUserPosition(user) {
@@ -155,13 +162,13 @@ class CSVProcessor {
     });
   }
 
-  async getTopTenUsers() {
+  async getTopXUsers(topXUsers=10) {
     try {
       const topUsers = await this.prisma.users.findMany({
         orderBy: {
           global_position: 'asc', // Sort by global_position in descending order
         },
-        take: 10, // Limit to top 10 users
+        take: topXUsers, 
       });
 
       return topUsers;

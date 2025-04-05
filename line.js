@@ -100,6 +100,11 @@ class Line {
       if(this.referral_buckets.has(user.referrals)){
         const bucket = this.referral_buckets.get(user.referrals);
         bucket.delete(user.user_id);
+
+        if(bucket.size === 0){
+          // remove empty bucket
+          this.referral_buckets.delete(user.referrals);
+        }
       }
     }
     // update old user list as well
@@ -142,10 +147,10 @@ class Line {
     );
     this.zeroth_bucket_array_length += 1;
 
-    if(user.user_id === '3'){
-      console.log("user 3 refers user 2");
+    if (user.user_id === '4'){
+      console.log('found 4');
     }
-  
+
     // Check if the referrer exists in memory
     if (user.ref_id) {
       let referral_user = this.findUser(user.ref_id);
@@ -318,6 +323,7 @@ class Line {
 
   async sortBucket(referralCount) {
     const dbUsers = await this.getDbUsersArray(referralCount);
+    console.log(referralCount);
 
     if (referralCount === 0) {
       const sortedUsers = this.mergeSortedUsers(this.zeroth_bucket_array, dbUsers);

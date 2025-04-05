@@ -15,8 +15,8 @@ async function processCSV() {
     await csvProcessor.processCSV();
 
     // // Fetch and display the top ten users
-    // const topTenUsers = await csvProcessor.getTopTenUsers();
-    // console.log('Top 10 Users by Global Position:', topTenUsers);
+    const topTenUsers = await csvProcessor.getTopXUsers();
+    console.log('Top 10 Users by Global Position:', topTenUsers);
 
     console.log('done here');
   } catch (error) {
