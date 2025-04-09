@@ -31,48 +31,6 @@ class Line {
     this.needsReSortBuckets.add(referralCount); // Mark the affected bucket for re-sort
   }
 
-  async getDatabaseBucketCount(bucket){
-    const userCount = await this.prisma.users.count();
-    if (userCount === 0) {
-      return 0; // Return 0 if the database is empty
-    }
-
-    const groupCount = await this.prisma.users.count({
-      where: {
-        ref_count: bucket, 
-      },
-    });
-
-    return groupCount; 
-  }
-
-  // TODO: global is off by 1 for 0th row wonder why??? 4/3 last thing i did
-
-  async getGlobalOffset(bucket_level) {
-    let global_offset = 0;
-
-    //TODO: be careful b/c this is entirely dependent on the value of max_referral
-    // maybe get max in memory and max in db and compare to make sure its correct
-    for (
-      let refferal_count = this.max_referral;
-      refferal_count > bucket_level;
-      refferal_count--
-    ) {
-      const database_count = await this.getDatabaseBucketCount(refferal_count);
-      // TODO: this only works because we sort in descending order test this througly
-      const bucketSize = this.referral_buckets.get(refferal_count)?.size ?? 0;
-      if (this.referral_buckets.has(refferal_count)) {
-        global_offset += this.needsReSortBuckets.has(refferal_count)
-          ? bucketSize + database_count
-          : bucketSize;
-      } else {
-        global_offset += database_count;
-      }
-    }
-
-    return global_offset;
-  }
-
   async getGlobalOffsets() {
     const global_offsets = new Map();
     let bucketCountsMap = new Map();
@@ -344,14 +302,7 @@ class Line {
       new Map(sortedUsers.map(user => [user.user_id, user]))
     );
   }
-
-  async getDBUsersForBucket(referralCount) {
-    return await this.prisma.users.findMany({
-      where: { ref_count: referralCount },
-      orderBy: { submit_time: 'asc' }, // Ensure users are sorted by submit_time
-    });
-  }
-
+   
   async sortBucket(referralCount, dbUsers) {
     if (referralCount === 0) {
       const sortedUsers = this.mergeSortedUsers(this.zeroth_bucket_array, dbUsers);
@@ -459,17 +410,6 @@ class Line {
     return updatedBuckets;
   }
 
-  async sortUserBucket(user) {
-    const referralCount = user.referrals;
-
-    if (!this.needsReSortBuckets.has(referralCount)) {
-      return;
-    }
-
-    await this.sortBucket(referralCount);
-    this.needsReSortBuckets.delete(referralCount);
-  }
-
   getGroup(group) {
     if (this.referral_buckets.has(group)) {
       if (group === 0) {
@@ -480,17 +420,7 @@ class Line {
     }
     return [];
   }
-
-  // get the users global position
-  async getGlobalPosition(user_id) {
-    const found_user = this.findUser(user_id);
-    if (found_user) {
-      await this.sortUserBucket(found_user);
-      return found_user.global_position;
-    }
-
-    return null;
-  }
+  
 }
 
 module.exports = Line;

@@ -4,7 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 const Line = require("./line");
 
 // TODO: was 1
-const BATCH_SIZE = 30000; // Process and update every 1000 users
+const BATCH_SIZE = 10000; // Process and update every 1000 users
 
 class CSVProcessor {
   constructor(filePath, prismaInstance = new PrismaClient()) {
