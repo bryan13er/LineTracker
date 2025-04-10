@@ -3,7 +3,7 @@ const path = require('path');
 const CSVProcessor = require('./CSVProcessor'); // Ensure the path matches your file structure
 
 // Define the path to the CSV file you want to process
-const csvFilePath = path.join(__dirname, '/sample_data.csv'); // Make sure this file exists
+const csvFilePath = path.join(__dirname, '../data/sample_data.csv'); // Make sure this file exists
 
 // Function to process CSV
 async function processCSV() {

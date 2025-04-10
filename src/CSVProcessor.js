@@ -1,7 +1,7 @@
 const fs = require("fs");
 const csv = require("csv-parser");
 const { PrismaClient } = require("@prisma/client");
-const Line = require("./line");
+const Line = require("./Line");
 
 // TODO: was 1
 const BATCH_SIZE = 10000; // Process and update every 1000 users
@@ -45,7 +45,6 @@ class CSVProcessor {
 
         // Batch processing
         if (this.userCount % BATCH_SIZE === 0) {
-          console.log("gets to the sort");
           await this.sortAndUpdate();
           this.clearLineObject();
           // break;
@@ -57,11 +56,8 @@ class CSVProcessor {
       }
     }
 
-    console.log("Done reading");
-
-    // // Final update for remaining users
+    // Final update for remaining users
     if (this.line.needsReSortBuckets.size > 0) {
-      console.log("sorts left over users");
       await this.sortAndUpdate();
     }
 
