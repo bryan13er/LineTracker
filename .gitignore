@@ -10,6 +10,7 @@
 # Build directories
 /dist/
 /build/
+coverage/
 
 /npm-debug.log
 /yarn-debug.log
