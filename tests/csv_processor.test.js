@@ -20,7 +20,7 @@ describe("CSVProcessor", () => {
       $transaction: jest.fn((operations) => Promise.resolve(operations)), // Mock $transaction
     };
     PrismaClient.mockImplementation(() => mockPrisma);
-  
+
     // Mock Line class
     mockLine = {
       createUser: jest.fn(),
@@ -30,7 +30,7 @@ describe("CSVProcessor", () => {
       needsReSortBuckets: new Set(),
     };
     Line.mockImplementation(() => mockLine);
-  
+
     // Create an instance of CSVProcessor with the mocked PrismaClient
     csvProcessor = new CSVProcessor("test.csv", mockPrisma);
   });
@@ -71,7 +71,7 @@ describe("CSVProcessor", () => {
             updated_at: expect.any(Date),
           },
         }),
-      ])
+      ]),
     );
   });
 });

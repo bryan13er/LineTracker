@@ -1,0 +1,135 @@
+openapi: 3.0.0
+info:
+  title: LineTracker API
+  version: 1.0.0
+  description: API for managing line tracking and user referrals
+servers:
+  - url: http://localhost:3000
+paths:
+  /users/top-x:
+    get:
+      summary: Get the top X users
+      description: Fetches the top X users based on their global position. Defaults to 10 if no value is provided for X.
+      parameters:
+        - in: query
+          name: x
+          schema:
+            type: integer
+            default: 10
+          description: The number of top users to fetch.
+      responses:
+        200:
+          description: A list of the top X users.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id:
+                      type: string
+                      description: The user ID.
+                    ref_count:
+                      type: integer
+                      description: The number of referrals.
+                    global_position:
+                      type: integer
+                      description: The user's global position.
+                    
+        500:
+          description: Internal server error.
+  /users/get-users-count:
+    get:
+      summary: Get the count of all users in the database
+      responses:
+        200:
+          description: integer repereseting count of users
+          content:
+            application/json:
+              schema:
+                type: integer
+                example: 5
+        500:
+          description: Internal server error
+  /users/get-position-by-email:
+    get:
+      summary: Get the position in line of a user with their email
+      parameters:
+        - in: query
+          name: email
+          required: true
+          schema:
+            type: string
+            format: email
+          description: The email of the user whose position in line is being fetched.
+      responses:
+        200:
+          description: The position of the user in line.
+          content:
+            application/json:
+              schema:
+                type: integer
+                example: 5
+        404:
+          description: User not found.
+  /users/get-position-by-telegram-handle:
+    get:
+      summary: Get position in line of a user with their handle
+      parameters:
+        - in: query
+          name: telegram_handle
+          required: true
+          schema: 
+            type: string
+            pattern: "^@[a-zA-Z0-9_]{5,32}$"
+          description: The Telegram handle of the user (e.g., @username).
+      responses:
+        200:
+          description: The position of the user in line.
+          content:
+            application/json:
+              schema:
+                type: integer
+                example: 5
+        404:
+          description: User not found.
+  /users/get-users-by-ref-count:
+    get:
+      summary: Get users from same ref_count
+      parameters:
+        - in: query
+          name: ref_count
+          required: true
+          schema:
+            type: integer
+          description: The value representing the referral count to filter users by.
+      responses:
+        200:
+          description: A list of users with the specified referral count.
+          content:
+            application/json:
+              schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                    description: The user ID.
+                  ref_count:
+                    type: integer
+                    description: The number of referrals.
+                  global_position:
+                    type: integer
+                    description: The user's global position.
+                  email:
+                    type: string
+                    description: The user's email
+                  telegram_handle:
+                    type: string
+                    description: The user's telegram handle       
+        404:
+          description: No users found with the specified referral count.
+        500:
+          description: Internal server error.

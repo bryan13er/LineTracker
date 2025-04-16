@@ -17,10 +17,10 @@ model Users {
   user_id          String   @id
   ref_id           String?
   submit_time      DateTime
-  telegram_handle  String?
-  email            String?
+  telegram_handle  String?   @unique
+  email            String?   @unique
   trading_style    String?    // Single-value, stored as TEXT
-  ideal_setup      String?   @db.Text // Single-value, stored as TEXT
+  ideal_setup      String?   @db.LongText // Single-value, stored as TEXT
   current_trading_platforms  Json? // Multi-choice, stored as JSON
   trading_methods  Json? // Multi-choice, stored as JSON
   favorite_feature Json? // Stores up to 2 favorite features

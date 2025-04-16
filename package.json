@@ -1,10 +1,13 @@
 {
   "dependencies": {
-    "@prisma/client": "^6.5.0",
+    "@prisma/client": "^6.6.0",
     "csv-parser": "^3.2.0",
     "express": "^4.21.2",
     "mysql2": "^3.14.0",
-    "prisma": "^6.5.0"
+    "prisma": "^6.5.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "name": "ryan-project",
   "version": "1.0.0",
@@ -12,7 +15,9 @@
   "main": "possible_functions.js",
   "scripts": {
     "test": "jest",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
   },
   "repository": {
     "type": "git",
@@ -32,7 +37,11 @@
     "eslint-plugin-promise": "^7.2.1",
     "globals": "^16.0.0",
     "jest": "^27.5.1",
+    "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "typescript": "^5.8.2"
+  },
+  "directories": {
+    "test": "tests"
   }
 }
